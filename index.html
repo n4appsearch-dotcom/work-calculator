@@ -163,6 +163,7 @@
         evt.currentTarget.className += " active";
     }
 
+    // แก้ไขตรรกะคำนวณตัวชี้วัด
     function calcInd() {
         const type = document.getElementById('indType').value;
         const plan = parseFloat(document.getElementById('indPlan').value);
@@ -172,72 +173,63 @@
         if (!plan || isNaN(result)) { display.innerText = "0.00"; return; }
 
         let percent;
-        if (type === 'normal') {
-            // เกณฑ์ปกติ: ยิ่งมากยิ่งดี
-            percent = (result / plan * 100);
-        } else {
-            // เกณฑ์ผกผัน: ยิ่งน้อยยิ่งดี
-            if (result <= plan) {
-                // ถ้าผลน้อยกว่าแผน (ทำดี) ให้ใช้การคำนวณแบบปกติเพื่อดู % การใช้ไป
-                percent = (result / plan * 100);
-            } else {
-                // ถ้าผลเกินแผน (ทำแย่) ให้ใช้สูตรหักลบจาก 200 เพื่อดูผลคะแนนที่ลดลง
-                percent = (200 - (result / plan * 100));
-            }
-        }
-        
-        // ป้องกันไม่ให้คะแนนติดลบ
-        if (percent < 0) percent = 0;
+        // ปรับให้ทั้งแบบปกติและแบบผกผัน ใช้การหาค่าร้อยละปกติ ตามความต้องการของคุณ
+        percent = (result / plan * 100);
         
         display.innerText = percent.toFixed(2);
-    }
-
+        
+        // เพิ่มลูกเล่น: ถ้าเป็นเกณฑ์ไม่เกิน แล้วผลเกินแผน ให้เปลี่ยนเป็นสีแดง
+        if (type === 'inverse' && percent > 100) {
+            display.style.color = 'var(--danger)';
+        } else if (type === 'normal' && percent < 100) {
+            display.style.color = 'var(--danger)';
+        } else {
+            display.style.color = 'var(--primary)';
+        }
     }
 
     function clearInd() {
         document.getElementById('indPlan').value = '';
         document.getElementById('indResult').value = '';
         document.getElementById('indDisplay').innerText = '0.00';
+        document.getElementById('indDisplay').style.color = 'var(--primary)';
     }
 
     function calcBg() {
-        const totalDays = parseFloat(document.getElementById('bgTotalDays').value);
-        const currentDay = parseFloat(document.getElementById('bgCurrentDay').value);
-        const targetPct = parseFloat(document.getElementById('bgTargetPct').value);
-        const totalMoney = parseFloat(document.getElementById('bgTotalMoney').value);
-        const actualMoney = parseFloat(document.getElementById('bgActualMoney').value);
+        const totalDays = parseFloat(document.getElementById('bgTotalDays').value) || 0;
+        const currentDay = parseFloat(document.getElementById('bgCurrentDay').value) || 0;
+        const targetPct = parseFloat(document.getElementById('bgTargetPct').value) || 0;
+        const totalMoney = parseFloat(document.getElementById('bgTotalMoney').value) || 0;
+        const actualMoney = parseFloat(document.getElementById('bgActualMoney').value) || 0;
 
         const planDisp = document.getElementById('bgPlanDisplay');
         const actualDisp = document.getElementById('bgActualDisplay');
         const statusDisp = document.getElementById('bgStatus');
 
-        if (!totalDays || !currentDay || isNaN(targetPct)) return;
-
-        let planTodayPct = (currentDay / totalDays) * targetPct;
+        let planTodayPct = (totalDays > 0) ? (currentDay / totalDays) * targetPct : 0;
         planDisp.innerText = planTodayPct.toFixed(2) + "%";
 
-        if (isNaN(totalMoney) || isNaN(actualMoney) || totalMoney === 0) return;
+        let actualPct = (totalMoney > 0) ? (actualMoney / totalMoney) * 100 : 0;
+        actualDisp.innerText = actualPct.toFixed(2); // ตัด % ออก
 
-        let actualPct = (actualMoney / totalMoney) * 100;
-        actualDisp.innerText = actualPct.toFixed(2) + "%";
+        if (totalMoney > 0 && totalDays > 0) {
+            let diffPct = actualPct - planTodayPct;
+            let diffMoney = actualMoney - (planTodayPct / 100 * totalMoney);
 
-        let diffPct = actualPct - planTodayPct;
-        let diffMoney = actualMoney - (planTodayPct / 100 * totalMoney);
-
-        if (diffPct >= 0) {
-            statusDisp.innerHTML = `<span class="status-fast">เร็วกว่าแผน ${diffPct.toFixed(2)}%</span><br><small>(เกินเป้าอยู่ ${diffMoney.toLocaleString(undefined, {maximumFractionDigits:0})} บาท)</small>`;
+            if (diffPct >= 0) {
+                statusDisp.innerHTML = `<span class="status-fast">เร็วกว่าแผน ${diffPct.toFixed(2)}%</span><br><small>(เกินเป้าอยู่ ${diffMoney.toLocaleString(undefined, {maximumFractionDigits:0})} บาท)</small>`;
+            } else {
+                statusDisp.innerHTML = `<span class="status-slow">ช้ากว่าแผน ${Math.abs(diffPct).toFixed(2)}%</span><br><small>(ต่ำกว่าเป้า ${Math.abs(diffMoney).toLocaleString(undefined, {maximumFractionDigits:0})} บาท)</small>`;
+            }
         } else {
-            statusDisp.innerHTML = `<span class="status-slow">ช้ากว่าแผน ${Math.abs(diffPct).toFixed(2)}%</span><br><small>(ต่ำกว่าเป้า ${Math.abs(diffMoney).toLocaleString(undefined, {maximumFractionDigits:0})} บาท)</small>`;
+            statusDisp.innerText = 'รอข้อมูล...';
         }
     }
 
     function clearBg() {
-        document.getElementById('bgCurrentDay').value = '';
-        document.getElementById('bgTargetPct').value = '';
-        document.getElementById('bgTotalMoney').value = '';
-        document.getElementById('bgActualMoney').value = '';
+        ['bgCurrentDay', 'bgTargetPct', 'bgTotalMoney', 'bgActualMoney'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('bgPlanDisplay').innerText = '0.00%';
-        document.getElementById('bgActualDisplay').innerText = '0.00%';
+        document.getElementById('bgActualDisplay').innerText = '0.00';
         document.getElementById('bgStatus').innerText = 'รอข้อมูล...';
     }
 </script>
@@ -245,4 +237,5 @@
 </body>
 
 </html>
+
 
