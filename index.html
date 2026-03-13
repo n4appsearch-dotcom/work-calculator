@@ -163,7 +163,6 @@
         evt.currentTarget.className += " active";
     }
 
-    // แก้ไขตรรกะคำนวณตัวชี้วัด
     function calcInd() {
         const type = document.getElementById('indType').value;
         const plan = parseFloat(document.getElementById('indPlan').value);
@@ -173,15 +172,21 @@
         if (!plan || isNaN(result)) { display.innerText = "0.00"; return; }
 
         let percent;
-        // ปรับให้ทั้งแบบปกติและแบบผกผัน ใช้การหาค่าร้อยละปกติ ตามความต้องการของคุณ
-        percent = (result / plan * 100);
+        if (type === 'normal') {
+            percent = (result / plan * 100);
+        } else {
+            // แก้ไข: เกณฑ์ผกผัน (ไม่เกิน)
+            if (result <= plan) {
+                percent = (result / plan * 100); // ถ้าน้อยกว่าแผน ใช้ร้อยละปกติ
+            } else {
+                percent = (200 - (result / plan * 100)); // ถ้าเกินแผน ใช้ผกผันเหมือนเดิม
+            }
+        }
         
         display.innerText = percent.toFixed(2);
         
-        // เพิ่มลูกเล่น: ถ้าเป็นเกณฑ์ไม่เกิน แล้วผลเกินแผน ให้เปลี่ยนเป็นสีแดง
-        if (type === 'inverse' && percent > 100) {
-            display.style.color = 'var(--danger)';
-        } else if (type === 'normal' && percent < 100) {
+        // จัดการสี: ถ้าต่ำกว่า 100 (กรณีปกติ) หรือ เกิน 100 (กรณีผกผันที่ผล>แผน) ให้เป็นสีแดง
+        if ((type === 'normal' && percent < 100) || (type === 'inverse' && result > plan)) {
             display.style.color = 'var(--danger)';
         } else {
             display.style.color = 'var(--primary)';
@@ -210,7 +215,7 @@
         planDisp.innerText = planTodayPct.toFixed(2) + "%";
 
         let actualPct = (totalMoney > 0) ? (actualMoney / totalMoney) * 100 : 0;
-        actualDisp.innerText = actualPct.toFixed(2); // ตัด % ออก
+        actualDisp.innerText = actualPct.toFixed(2);
 
         if (totalMoney > 0 && totalDays > 0) {
             let diffPct = actualPct - planTodayPct;
@@ -233,9 +238,9 @@
         document.getElementById('bgStatus').innerText = 'รอข้อมูล...';
     }
 </script>
-
 </body>
 
 </html>
+
 
 
