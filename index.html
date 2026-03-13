@@ -170,8 +170,28 @@
         const display = document.getElementById('indDisplay');
 
         if (!plan || isNaN(result)) { display.innerText = "0.00"; return; }
-        let percent = (type === 'normal') ? (result / plan * 100) : (200 - (result / plan * 100));
+
+        let percent;
+        if (type === 'normal') {
+            // เกณฑ์ปกติ: ยิ่งมากยิ่งดี
+            percent = (result / plan * 100);
+        } else {
+            // เกณฑ์ผกผัน: ยิ่งน้อยยิ่งดี
+            if (result <= plan) {
+                // ถ้าผลน้อยกว่าแผน (ทำดี) ให้ใช้การคำนวณแบบปกติเพื่อดู % การใช้ไป
+                percent = (result / plan * 100);
+            } else {
+                // ถ้าผลเกินแผน (ทำแย่) ให้ใช้สูตรหักลบจาก 200 เพื่อดูผลคะแนนที่ลดลง
+                percent = (200 - (result / plan * 100));
+            }
+        }
+        
+        // ป้องกันไม่ให้คะแนนติดลบ
+        if (percent < 0) percent = 0;
+        
         display.innerText = percent.toFixed(2);
+    }
+
     }
 
     function clearInd() {
@@ -225,3 +245,4 @@
 </body>
 
 </html>
+
