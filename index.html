@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบคำนวณผลงานและงบประมาณ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #004d99;
+            --secondary: #eef2f7;
+            --accent: #ff9800;
+            --success: #28a745;
+            --danger: #dc3545;
+            --gray: #6c757d;
+        }
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        /* Tab System */
+        .tabs { display: flex; background: #f1f1f1; }
+        .tab-btn {
+            flex: 1; padding: 15px; border: none; background: none;
+            cursor: pointer; font-family: inherit; font-weight: bold;
+            color: #666; transition: 0.3s;
+        }
+        .tab-btn.active {
+            background: white; color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+        }
+        .tab-content { padding: 25px; display: none; }
+        .tab-content.active { display: block; }
+
+        /* Form Style */
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+        select, input {
+            width: 100%; padding: 12px; border: 1px solid #ccc;
+            border-radius: 8px; box-sizing: border-box; font-size: 16px;
+        }
+        input:focus { border-color: var(--primary); outline: none; background: #fff; }
+        .row { display: flex; gap: 10px; }
+        .row .input-group { flex: 1; }
+
+        /* Result Display */
+        .result-card {
+            margin-top: 20px; padding: 20px;
+            background: var(--secondary); border-radius: 12px;
+            text-align: center; border: 1px solid #d1d9e6;
+        }
+        .res-label { font-size: 0.85rem; color: #555; }
+        .res-main { font-size: 1.2rem; font-weight: bold; color: var(--primary); margin: 5px 0; }
+        .res-sub { font-size: 1rem; font-weight: bold; line-height: 1.4; }
+
+        .status-fast { color: var(--success); }
+        .status-slow { color: var(--danger); }
+
+        /* Reset Button */
+        .btn-clear {
+            width: 100%; margin-top: 15px; padding: 10px;
+            background-color: #f8f9fa; border: 1px solid #ddd;
+            border-radius: 8px; color: var(--gray); cursor: pointer;
+            font-family: inherit; font-size: 0.9rem; transition: 0.2s;
+        }
+        .btn-clear:hover { background-color: #e2e6ea; color: #333; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="openTab(event, 'indicatorTab')">ตัวชี้วัด</button>
+        <button class="tab-btn" onclick="openTab(event, 'budgetTab')">เป้าหมายการเบิกจ่าย</button>
+    </div>
+
+    <div id="indicatorTab" class="tab-content active">
+        <div class="input-group">
+            <label>ประเภทเกณฑ์</label>
+            <select id="indType" onchange="calcInd()">
+                <option value="normal">📈 ไม่น้อยกว่า (ปกติ)</option>
+                <option value="inverse">📉 ไม่เกิน (ผกผัน)</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>ค่าเป้าหมาย (แผน)</label>
+            <input type="number" id="indPlan" placeholder="กรอกตัวเลขแผน" oninput="calcInd()">
+        </div>
+        <div class="input-group">
+            <label>ผลการดำเนินงาน (ผล)</label>
+            <input type="number" id="indResult" placeholder="กรอกตัวเลขผลงาน" oninput="calcInd()">
+        </div>
+
+        <div class="result-card">
+            <div class="res-label">ร้อยละเปรียบเทียบ</div>
+            <div id="indDisplay" class="res-main">0.00</div>
+        </div>
+        
+        <button class="btn-clear" onclick="clearInd()">🧹 ล้างข้อมูลตัวชี้วัด</button>
+    </div>
+
+    <div id="budgetTab" class="tab-content">
+        <div class="row">
+            <div class="input-group">
+                <label>จำนวนวันทั้งหมด</label>
+                <input type="number" id="bgTotalDays" value="90" oninput="calcBg()">
+            </div>
+            <div class="input-group">
+                <label>วันที่คำนวณ (วันที่...)</label>
+                <input type="number" id="bgCurrentDay" placeholder="เช่น 75" oninput="calcBg()">
+            </div>
+        </div>
+        <div class="input-group">
+            <label>เป้าหมายเมื่อจบไตรมาส/ปี (%)</label>
+            <input type="number" id="bgTargetPct" placeholder="เช่น 25" oninput="calcBg()">
+        </div>
+        
+        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #ddd;">
+        
+        <div class="input-group">
+            <label>งบประมาณทั้งหมด (บาท)</label>
+            <input type="number" id="bgTotalMoney" placeholder="กรอกจำนวนเงินเต็ม" oninput="calcBg()">
+        </div>
+        <div class="input-group">
+            <label>เบิกจ่ายจริง (บาท)</label>
+            <input type="number" id="bgActualMoney" placeholder="กรอกเงินที่เบิกจริง" oninput="calcBg()">
+        </div>
+
+        <div class="result-card">
+            <div style="margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 10px;">
+                <div class="res-label">แผนที่ควรทำได้ ณ วันนี้</div>
+                <div id="bgPlanDisplay" style="font-size: 1.2rem; font-weight: bold;">0.00%</div>
+            </div>
+            <div class="res-label">เปอร์เซนต์การเบิกจ่ายจริง</div>
+            <div id="bgActualDisplay" class="res-main">0.00%</div>
+            <div id="bgStatus" class="res-sub">รอข้อมูล...</div>
+        </div>
+
+        <button class="btn-clear" onclick="clearBg()">🧹 ล้างข้อมูลแผนงบประมาณ</button>
+    </div>
+</div>
+
+<script>
+    function openTab(evt, tabName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
+        tablinks = document.getElementsByClassName("tab-btn");
+        for (i = 0; i < tablinks.length; i++) { tablinks[i].className = tablinks[i].className.replace(" active", ""); }
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+    }
+
+    function calcInd() {
+        const type = document.getElementById('indType').value;
+        const plan = parseFloat(document.getElementById('indPlan').value);
+        const result = parseFloat(document.getElementById('indResult').value);
+        const display = document.getElementById('indDisplay');
+
+        if (!plan || isNaN(result)) { display.innerText = "0.00"; return; }
+        let percent = (type === 'normal') ? (result / plan * 100) : (200 - (result / plan * 100));
+        display.innerText = percent.toFixed(2);
+    }
+
+    function clearInd() {
+        document.getElementById('indPlan').value = '';
+        document.getElementById('indResult').value = '';
+        document.getElementById('indDisplay').innerText = '0.00';
+    }
+
+    function calcBg() {
+        const totalDays = parseFloat(document.getElementById('bgTotalDays').value);
+        const currentDay = parseFloat(document.getElementById('bgCurrentDay').value);
+        const targetPct = parseFloat(document.getElementById('bgTargetPct').value);
+        const totalMoney = parseFloat(document.getElementById('bgTotalMoney').value);
+        const actualMoney = parseFloat(document.getElementById('bgActualMoney').value);
+
+        const planDisp = document.getElementById('bgPlanDisplay');
+        const actualDisp = document.getElementById('bgActualDisplay');
+        const statusDisp = document.getElementById('bgStatus');
+
+        if (!totalDays || !currentDay || isNaN(targetPct)) return;
+
+        let planTodayPct = (currentDay / totalDays) * targetPct;
+        planDisp.innerText = planTodayPct.toFixed(2) + "%";
+
+        if (isNaN(totalMoney) || isNaN(actualMoney) || totalMoney === 0) return;
+
+        let actualPct = (actualMoney / totalMoney) * 100;
+        actualDisp.innerText = actualPct.toFixed(2) + "%";
+
+        let diffPct = actualPct - planTodayPct;
+        let diffMoney = actualMoney - (planTodayPct / 100 * totalMoney);
+
+        if (diffPct >= 0) {
+            statusDisp.innerHTML = `<span class="status-fast">เร็วกว่าแผน ${diffPct.toFixed(2)}%</span><br><small>(เกินเป้าอยู่ ${diffMoney.toLocaleString(undefined, {maximumFractionDigits:0})} บาท)</small>`;
+        } else {
+            statusDisp.innerHTML = `<span class="status-slow">ช้ากว่าแผน ${Math.abs(diffPct).toFixed(2)}%</span><br><small>(ต่ำกว่าเป้า ${Math.abs(diffMoney).toLocaleString(undefined, {maximumFractionDigits:0})} บาท)</small>`;
+        }
+    }
+
+    function clearBg() {
+        document.getElementById('bgCurrentDay').value = '';
+        document.getElementById('bgTargetPct').value = '';
+        document.getElementById('bgTotalMoney').value = '';
+        document.getElementById('bgActualMoney').value = '';
+        document.getElementById('bgPlanDisplay').innerText = '0.00%';
+        document.getElementById('bgActualDisplay').innerText = '0.00%';
+        document.getElementById('bgStatus').innerText = 'รอข้อมูล...';
+    }
+</script>
+
+</body>
+</html>
