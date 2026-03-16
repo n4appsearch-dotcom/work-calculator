@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบคำนวณร้อยละ ของ ธนภร</title>
+    <title>ระบบคำนวณร้อยละ</title>
+    <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="logocalculator.png">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -45,7 +47,7 @@
 <div class="container">
     <div class="header">
         <img src="logocalculator.png" alt="Logo" onerror="this.src='https://via.placeholder.com/100?text=Logo'">
-        <div style="font-weight: bold; color: var(--primary);">THANAPRON CALCULATOR</div>
+        <div style="font-weight: bold; color: var(--primary);">PERCENTRATE CALCULATOR</div>
     </div>
 
     <div class="tabs">
@@ -73,7 +75,7 @@
         <div class="result-card">
             <div class="res-label">คะแนนผลสัมฤทธิ์ (ร้อยละ)</div>
             <div id="kpiDisplay" class="res-main">0.00</div>
-            <div id="kpiStatus" style="font-size: 0.85rem; font-weight: bold;"></div>
+            <div id="kpiStatus" style="font-size: 1rem; font-weight: bold;"></div>
         </div>
         <button class="btn-clear" onclick="clearKpi()">🧹 ล้างข้อมูล</button>
     </div>
@@ -101,7 +103,7 @@
             <div class="res-label">แผนที่ควรทำได้: <span id="bgPlanPct" style="font-weight:bold">0.00%</span></div>
             <div class="res-label">เบิกจ่ายจริง:</div>
             <div id="bgActualPct" class="res-main">0.00</div>
-            <div id="bgStatus" style="font-size: 0.85rem;"></div>
+            <div id="bgStatus" style="font-size: 1rem;"></div>
         </div>
         <button class="btn-clear" onclick="clearBg()">🧹 ล้างข้อมูล</button>
     </div>
